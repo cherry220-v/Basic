@@ -1,0 +1,117 @@
+{
+  "mainMenu": [
+    {
+      "caption": "File",
+      "id": "file",
+      "children": [
+        {
+          "caption": "New file",
+          "command": {
+            "command": "NewTabCommand"
+          },
+          "shortcut": "ctrl+n"
+        }
+      ]
+    },
+    {
+      "caption": "Tools",
+      "id": "tools",
+      "children": [
+        {
+          "caption": "Log console",
+          "command": {
+            "command": "LogConsoleCommand"
+          },
+          "checkable": true,
+          "shortcut": "shift+esc"
+        },
+        {
+          "caption": "Package Manager",
+          "command": {
+            "command": "ShowPMCommand"
+          },
+          "shortcut": "ctrl+shift+p"
+        },
+        {
+          "caption": "-"
+        }
+      ]
+    },
+    {
+      "caption": "Settings",
+      "id": "settings",
+      "children": [
+        {
+          "caption": "Themes",
+          "id": "themes"
+        },
+        {
+          "caption": "Edit hotkeys",
+          "command": {
+            "command": "ShowPMCommand"
+          }
+        }
+      ]
+    }
+  ],
+  "textContextMenu": [
+    {
+      "caption": "Select all",
+      "command": {
+        "command": "SelectAllCommand"
+      },
+      "shortcut": "ctrl+a"
+    },
+    {
+      "caption": "Copy",
+      "command": {
+        "command": "CopyCommand"
+      },
+      "shortcut": "ctrl+c"
+    },
+    {
+      "caption": "Paste",
+      "command": {
+        "command": "PasteCommand"
+      },
+      "shortcut": "ctrl+v"
+    },
+    {
+      "caption": "Cut",
+      "command": {
+        "command": "CutCommand"
+      },
+      "shortcut": "ctrl+x"
+    },
+    {
+      "caption": "-"
+    },
+    {
+      "caption": "Undo",
+      "command": {
+        "command": "UndoCommand"
+      },
+      "shortcut": "ctrl+z"
+    },
+    {
+      "caption": "Redo",
+      "command": {
+        "command": "RedoCommand"
+      },
+      "shortcut": "ctrl+shift+z"
+    },
+    {
+      "caption": "-"
+    }
+  ],
+"tabBarContextMenu": [
+    {
+      "caption": "Close tab",
+      "command": {
+        "command": "CloseTabCommand"
+      },
+      "shortcut": "ctrl+w"
+    }
+]
+
+}

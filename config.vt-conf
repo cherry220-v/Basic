@@ -1,0 +1,6 @@
+{
+    "name": "Basic",
+    "version": "1.0",
+    "main": "main.py",
+    "menu": "Main.vt-menu"
+}
