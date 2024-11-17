@@ -355,13 +355,20 @@ def initAPI(api):
             deleteButton.setFixedSize(20, 20)
             deleteButton.setIcon(QtGui.QIcon("icons/delete.png"))
             deleteButton.setToolTip("Remove Tag")
-            deleteButton.clicked.connect(lambda: VtAPI.activeWindow.runCommand({"command": "RemoveTagCommand", "kwargs": {"file": filename, "tag": self.tag}}))
+            deleteButton.clicked.connect(lambda: self.deleteTag(listItem, filename, self.tag))
             itemLayout.addWidget(deleteButton)
 
             listItem = QtWidgets.QListWidgetItem()
             listItem.setSizeHint(itemWidget.sizeHint())
             self.listWidget.addItem(listItem)
             self.listWidget.setItemWidget(listItem, itemWidget)
+        
+        def deleteTag(self, item, file, tag):
+            for view in VtAPI.activeWindow.views:
+                if view.getFile() == file:
+                    self.listWidget.takeItem(self.listWidget.row(item))
+                    view.removeTag(tag=tag)
+
     def parseThemes(path):
         files = []
         for file in os.listdir(path):
