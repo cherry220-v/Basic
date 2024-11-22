@@ -18,14 +18,28 @@ def initAPI(api):
         def __init__(self, api, window):
             super().__init__(api, window)
             self.createWidget()
-        def run(self, checked=None):
+        def run(self, restoring=False):
+            if not restoring:
+                if self.api.findKey("state.logConsole.active", self.api.STATEFILE):
+                    self.console = self.window.isDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea)
+                    self.console.deleteLater()
+                    self.api.addKey("state.logConsole.active", False, self.api.STATEFILE)
+                    self.window.signals.logWrited.connect(self.updateLog)
             if not self.api.activeWindow.isDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea):
                 self.console = ConsoleWidget(self.api)
                 self.console.textEdit.append(self.window.getLog())
                 self.window.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, self.console)
+                self.api.addKey("state.logConsole.active", True, self.api.STATEFILE)
             else:
                 self.console = self.window.isDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea)
                 self.console.deleteLater()
+                self.api.addKey("state.logConsole.active", False, self.api.STATEFILE)
+        def updateLog(self, value):
+                print(value)
+                self.console.textEdit.clear()
+                self.console.textEdit.textCursor().insertHtml(f"<br>{value}")
+                scrollbar = self.console.textEdit.verticalScrollBar()
+                scrollbar.setValue(scrollbar.maximum())
         def createWidget(self):
             global ConsoleWidget
             class ConsoleWidget(VtAPI.Widgets.DockWidget):
@@ -104,7 +118,7 @@ def initAPI(api):
 
     class ShowPMCommand(VtAPI.Plugin.WindowCommand):
         def run(self):
-            mLayout = self.constructWindow(self.api.packagesDir)
+            mLayout = self.constructWindow(self.api.packagesDirs)
             try:
                 self.updateRepos()
             except err.URLError:
@@ -302,6 +316,8 @@ def initAPI(api):
             if self.view.getFile():
                 self.view.addTag(self.view.getFile(), tag)
                 self.view.window().signals.fileTagAdded.emit(self.view, tag)
+            else:
+                self.view.window().setLogMsg("Warning: Save file to add tag", VtAPI.WARNING)
     class RemoveTagCommand(VtAPI.Plugin.TextCommand):
         def run(self, tag=None, file=None, show=False):
             if not tag:
@@ -386,11 +402,24 @@ def initAPI(api):
                 themes.append({"caption": theme, "command": {"command": f"SetThemeCommand", "kwargs": {"theme": theme}}})
         VtAPI.activeWindow.updateMenu("themes", themes)
 
+    def saveConsoleState():
+        state = VtAPI.Settings(VtAPI.STATEFILE)
+        if state.has("state"):
+            VtAPI.addKey("state.logConsole.active", True, VtAPI.STATEFILE)
+
+    def restoreConsoleState():
+        isActive = VtAPI.findKey("state.logConsole.active", VtAPI.STATEFILE)
+        if isActive:
+            VtAPI.activeWindow.runCommand({"command": "LogConsoleCommand", "kwargs": {"restoring": True}})
+
     VtAPI.activeWindow.registerCommandClass({"command": SetThemeCommand})
     VtAPI.activeWindow.registerCommandClass({"command": ShowHideMinimap})
     VtAPI.activeWindow.registerCommandClass({"command": InitFileTagsCommand})
     VtAPI.activeWindow.registerCommandClass({"command": GetFilesForTagCommand})
     VtAPI.activeWindow.registerCommandClass({"command": AddTagCommand, "shortcut": "ctrl+f"})
     VtAPI.activeWindow.registerCommandClass({"command": RemoveTagCommand})
+
+    VtAPI.activeWindow.signals.windowStateRestoring.connect(restoreConsoleState)
+    VtAPI.activeWindow.signals.windowStateSaving.connect(saveConsoleState)
     VtAPI.activeWindow.signals.fileOpened.connect(lambda: VtAPI.activeWindow.runCommand({"command": "InitFileTagsCommand", "kwargs": {"view": VtAPI.activeWindow.activeView}}))
     VtAPI.activeWindow.signals.windowStarted.connect(loadThemes)

@@ -14,6 +14,19 @@
       ]
     },
     {
+      "caption": "View",
+      "id": "view",
+      "children": [
+        {
+          "caption": "Show minimap",
+          "command": {
+            "command": "ShowHideMinimap"
+          },
+          "checkable": true
+        }
+      ]
+    },
+    {
       "caption": "Tools",
       "id": "tools",
       "children": [
@@ -23,6 +36,7 @@
             "command": "LogConsoleCommand"
           },
           "checkable": true,
+          "checkedStatePath": "state.logConsole.active",
           "shortcut": "shift+esc"
         },
         {
