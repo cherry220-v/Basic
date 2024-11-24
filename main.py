@@ -14,38 +14,34 @@ def initAPI(api):
 
     global LogConsoleCommand, NewTabCommand, SelectAllCommand, CopyCommand, PasteCommand, CutCommand, UndoCommand, RedoCommand, SetThemeCommand, ShowPMCommand, CloseTabCommand, loadThemes, InitFileTagsCommand, AddTagCommand, RemoveTagCommand, ShowHideMinimap, GetFilesForTagCommand
 
-    class LogConsoleCommand(VtAPI.Plugin.WindowCommand):
+    class LogConsoleCommand(VtAPI.Plugin.WindowCommand, QtCore.QObject):
         def __init__(self, api, window):
             super().__init__(api, window)
             self.createWidget()
-        def run(self, restoring=False):
+        def run(self, restoring=False, state=None):
             if not restoring:
                 if self.api.findKey("state.logConsole.active", self.api.STATEFILE):
                     self.console = self.window.isDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea)
                     self.console.deleteLater()
                     self.api.addKey("state.logConsole.active", False, self.api.STATEFILE)
-                    self.window.signals.logWrited.connect(self.updateLog)
-            if not self.api.activeWindow.isDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea):
-                self.console = ConsoleWidget(self.api)
-                self.console.textEdit.append(self.window.getLog())
-                self.window.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, self.console)
-                self.api.addKey("state.logConsole.active", True, self.api.STATEFILE)
+                else:
+                    self.console = ConsoleWidget(self.window, self.api)
+                    self.console.textEdit.append(self.window.getLog())
+                    self.window.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, self.console)
+                    self.api.addKey("state.logConsole.active", True, self.api.STATEFILE)
             else:
-                self.console = self.window.isDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea)
-                self.console.deleteLater()
-                self.api.addKey("state.logConsole.active", False, self.api.STATEFILE)
-        def updateLog(self, value):
-                print(value)
-                self.console.textEdit.clear()
-                self.console.textEdit.textCursor().insertHtml(f"<br>{value}")
-                scrollbar = self.console.textEdit.verticalScrollBar()
-                scrollbar.setValue(scrollbar.maximum())
+                if state:
+                    self.console = ConsoleWidget(self.window, self.api)
+                    self.console.textEdit.append(self.window.getLog())
+                    self.window.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, self.console)
+                    self.api.addKey("state.logConsole.active", True, self.api.STATEFILE)
         def createWidget(self):
             global ConsoleWidget
             class ConsoleWidget(VtAPI.Widgets.DockWidget):
-                def __init__(self, api):
+                def __init__(self, window, api):
                     super().__init__()
                     self.api = api
+                    self.window = window
                     self.setWindowTitle(self.api.appName+" - Console")
                     self.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetClosable | QtWidgets.QDockWidget.DockWidgetFeature.DockWidgetFloatable)
                     self.setAllowedAreas(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea)
@@ -66,6 +62,12 @@ def initAPI(api):
                     self.verticalLayout.addWidget(self.lineEdit)
                     self.setWidget(self.consoleWidget)
                     self.lineEdit.returnPressed.connect(self.sendCommand)
+                    self.window.signals.logWrited.connect(self.updateLog)
+                def updateLog(self, value):
+                    self.textEdit.clear()
+                    self.textEdit.textCursor().insertHtml(f"<br>{value}")
+                    scrollbar = self.textEdit.verticalScrollBar()
+                    scrollbar.setValue(scrollbar.maximum())
                 def sendCommand(self):
                     text = self.lineEdit.text()
                     if text:
@@ -86,6 +88,7 @@ def initAPI(api):
     class NewTabCommand(VtAPI.Plugin.WindowCommand):
         def run(self):
             self.window.newFile()
+            # self.window.activeView.setMmapHidden(1)
 
     class SelectAllCommand(VtAPI.Plugin.TextCommand):
         def run(self):
@@ -223,7 +226,7 @@ def initAPI(api):
 
                 self.checkReqs(finalPackageDir)
             except Exception as e:
-                print(e)
+                self.__windowApi.activeWindow.setLogMsg(f"Error when loading plugin from '{url}'")
 
         def tempname(self, n):
             return "vt-" + str(uuid.uuid4())[:n + 1] + "-install"
@@ -294,6 +297,7 @@ def initAPI(api):
             for v in self.window.views:
                 if v == view:
                     v.close()
+                    break
 
     class ShowHideMinimap(VtAPI.Plugin.TextCommand):
         def run(self):
@@ -408,9 +412,10 @@ def initAPI(api):
             VtAPI.addKey("state.logConsole.active", True, VtAPI.STATEFILE)
 
     def restoreConsoleState():
-        isActive = VtAPI.findKey("state.logConsole.active", VtAPI.STATEFILE)
-        if isActive:
-            VtAPI.activeWindow.runCommand({"command": "LogConsoleCommand", "kwargs": {"restoring": True}})
+        global consoleIsActive
+        consoleIsActive = VtAPI.findKey("state.logConsole.active", VtAPI.STATEFILE)
+        if consoleIsActive:
+            VtAPI.activeWindow.runCommand({"command": "LogConsoleCommand", "kwargs": {"restoring": True, "state": consoleIsActive}})
 
     VtAPI.activeWindow.registerCommandClass({"command": SetThemeCommand})
     VtAPI.activeWindow.registerCommandClass({"command": ShowHideMinimap})
