@@ -71,16 +71,11 @@ def initAPI(api):
                 def sendCommand(self):
                     text = self.lineEdit.text()
                     if text:
-                        if text.startswith("vtapi"):
-                            if len(text.split(".")) == 2:
-                                apiCommand = text.split(".")[-1] 
-                                if hasattr(self.window.api, apiCommand):
-                                    self.api.activeWindow.setLogMsg(str(getattr(self.window.api, apiCommand)()))
-                            self.api.activeWindow.setLogMsg(str(self.window.api))
-                            self.lineEdit.clear()
-                        else:
-                            self.api.activeWindow.runCommand({"command": self.lineEdit.text()})
-                            self.lineEdit.clear()
+                        try:
+                            command = json.loads(self.lineEdit.text())
+                            self.api.activeWindow.runCommand(command)
+                        except: self.api.activeWindow.setLogMsg("Write command in {'command': 'command', 'args': [], 'kwargs': {}} format", self.api.ERROR)
+                        self.lineEdit.clear()
                 def closeEvent(self, e):
                     self.api.activeWindow.runCommand({"command": "LogConsoleCommand"})
                     e.ignore()
@@ -226,7 +221,7 @@ def initAPI(api):
 
                 self.checkReqs(finalPackageDir)
             except Exception as e:
-                self.__windowApi.activeWindow.setLogMsg(f"Error when loading plugin from '{url}'")
+                self.__windowApi.activeWindow.setLogMsg(f"Error when loading plugin from '{url}'", self.__windowApi.ERROR)
 
         def tempname(self, n):
             return "vt-" + str(uuid.uuid4())[:n + 1] + "-install"
